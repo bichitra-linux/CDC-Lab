@@ -1,0 +1,719 @@
+// For C code------------------------------------------
+// gcc -o filename filename.C
+// filename (to run)
+// For lex code----------------------------------------
+// flex filename.l
+//cc lex.yy.c -o filename.l
+// ./filename.l (ctrl+d/ctrl+z to end a program)
+-----------------------------------------------------------------------------
+// lex program to count number of words in given string
+
+
+%{
+    #include <stdio.h>
+    int word_count = 0; // Move declaration here
+%}
+
+%%
+
+[a-zA-Z]+      { 
+                    word_count++; 
+                    printf("Matched word: %s\n", yytext); 
+                }
+[ \t\n]+       { /* ignore whitespace */ }
+.              { 
+                    printf("Ignored character: %s\n", yytext); 
+                }
+
+<<EOF>>        { return 0; }
+
+%%
+
+int main() {
+    printf("Enter text (ctrl+D to end on Linux or ctrl+Z on Windows):\n");
+    yylex(); // Capture result
+    printf("Number of words = %d\n", word_count);
+    return 0;
+}
+
+int yywrap() {
+    return 1;
+}
+
+----------------------------------------------------------------------------------------
+//lex program to identify keywords, numbers, operators and identifiers
+
+
+%{
+#include <stdio.h>
+#include <ctype.h>
+#include <string.h>
+
+#define MAX_KEYWORDS 10
+
+// List of keywords
+char *keywords[] = {"int", "float", "if", "else", "while", "for", "return", "void", "char",
+"double"};
+
+int isKeyword(const char *str) {
+for (int i = 0; i < MAX_KEYWORDS; i++) {
+if (strcmp(str, keywords[i]) == 0)
+return 1;
+}
+
+return 0;
+}
+%}
+
+%%
+[a-zA-Z_][a-zA-Z0-9_]* {
+if (isKeyword(yytext)) {
+printf("Keyword: %s\n", yytext);
+} else {
+printf("Identifier: %s\n", yytext);
+}
+}
+[0-9]+(\.[0-9]+)? {
+printf("Number: %s\n", yytext);
+}
+[+\-*/=<>!&amp;|] {
+printf("Operator: %s\n", yytext);
+}
+[ \t\n]+ ; // Ignore whitespaces
+. {
+printf("Unknown character: %s\n", yytext);
+}
+%%
+
+int main(int argc, char *argv[]) {
+printf("Enter the input: ");
+yylex(); // Start scanning input
+return 0;
+
+}
+int yywrap() {
+return 1; // Indicates the end of input
+}
+
+--------------------------------------------------------------------
+//lex program to find if given letter is vowel or consonants
+
+%{
+#include <stdio.h>
+%}
+%%
+[a|e|i|o|u|A|E|I|O|U] printf("%s is a vowel\n", yytext);
+[b-df-hj-np-tv-zB-DF-HJ-NP-TV-Z] printf("%s is a consonant\n", yytext);
+[^a-zA-Z] printf("%s is not a valid letter\n", yytext);
+%%
+int main() {
+printf("Enter a character: ");
+yylex();
+return 0;
+}
+
+int yywrap() {
+
+return 1;
+}
+
+---------------------------------------------------------------------------
+//lex program to count the number of vowels or consonants in given string
+
+%{
+#include <stdio.h>
+
+int vowels = 0; // Counter for vowels
+int consonants = 0; // Counter for consonants
+%}
+
+%%
+[a|e|i|o|u|A|E|I|O|U] { vowels++; }
+[b-df-hj-np-tv-zB-DF-HJ-NP-TV-Z] { consonants++; }
+. /* Ignore other characters */
+%%
+
+int main() {
+printf("Enter a string: ");
+yylex(); // Call lexical analyzer
+
+// Print the counts
+printf("\nNumber of vowels: %d\n", vowels);
+printf("Number of consonants: %d\n", consonants);
+
+return 0;
+
+}
+
+int yywrap() {
+return 1;
+}
+
+
+-----------------------------------------------------------------------------
+//lex program to check whether a given number is even or odd
+
+%{
+#include <stdio.h>
+%}
+
+%%
+[0-9]+ {
+int num = atoi(yytext); // Convert matched text to integer
+if (num % 2 == 0)
+printf("%d is even\n", num);
+else
+printf("%d is odd\n", num);
+}
+. {
+printf("Invalid input: %s\n", yytext);
+}
+%%
+
+int main() {
+
+printf("Enter a number: ");
+yylex(); // Call lexical analyzer
+return 0;
+}
+
+int yywrap() {
+return 1;
+}
+
+------------------------------------------------------------------------------------
+// C program to design finite automata that accepts all strings with "ing" over a to Z
+
+#include <stdio.h>
+#include <string.h>
+#include <stdbool.h>
+#include <ctype.h>
+
+#define MAX_LENGTH 100
+bool isAcceptedByFA (const char *str) {
+int state = 0; // Start state
+int i;
+char c;
+
+for (i = 0; str[i] != '\0'; i++) {
+c = str[i];
+
+// Transition based on the current state and input character
+switch (state) {
+case 0: // Start state
+if (c == 'i') state = 1;
+else state = 0;
+break;
+
+case 1: // After 'i'
+if (c == 'n') state = 2;
+else if (c == 'i') state = 1;
+else state = 0;
+break;
+
+case 2: // After 'in'
+
+if (c == 'g') state = 3;
+else if (c == 'i') state = 1;
+else state = 0;
+break;
+
+case 3: // Accept state (after "ing")
+state = 3; // Remain in the accept state
+break;
+
+default:
+state = 0; // Reset to start state for unexpected cases
+break;
+}
+}
+
+// Accept if the final state is the accepting state (3)
+return (state == 3);
+}
+
+int main() {
+char input[MAX_LENGTH];
+printf("Enter a string (over the alphabet 'a' to 'z'): ");
+// Limit the input length to prevent buffer overflow
+if (scanf("%99s", input) != 1) {
+printf("Invalid input!\n");
+return 1;
+}
+
+// Convert the string to lowercase and validate
+for (int i = 0; i < strlen(input); i++) {
+
+if (!isalpha(input[i])) {
+printf("Invalid input! Please enter only alphabetic characters.\n");
+return 1;
+}
+input[i] = tolower(input[i]); // Convert to lowercase
+}
+
+// Check if the string is accepted by the FA
+if (isAcceptedByFA(input)) {
+printf("The string \"%s\" is accepted (contains 'ing').\n", input);
+} else {
+printf("The string \"%s\" is not accepted (does not contain 'ing').\n", input);
+}
+
+return 0;
+}
+
+-----------------------------------------------------------------------------------
+// C program to check whether a given line is a comment or not
+
+#include <stdio.h>
+#include <string.h>
+#include <stdbool.h>
+
+// Function to check if the line is a valid C comment
+bool isCComment(const char *line) {
+// Skip leading whitespace
+while (*line == ' ' || *line == '\t') {
+line++;
+}
+
+// Check for single-line comment (//)
+if (line[0] == '/' && line[1] == '/') {
+return true; // Single-line comment
+}
+
+// Check for multi-line comment (/* ... */)
+if (line[0] == '/' && line[1] == '*') {
+size_t len = strlen(line);
+// Check if it ends with "*/"
+if (len >= 4 && line[len - 2] == '*' && line[len - 1] == '/') {
+return true;
+}
+}
+
+return false; // Not a valid C comment
+}
+
+int main() {
+char line[256];
+
+printf("Enter a C comment: ");
+fgets(line, sizeof(line), stdin);
+
+// Remove newline character if present
+size_t len = strlen(line);
+if (len > 0 && line[len - 1] == '\n') {
+line[len - 1] = '\0';
+}
+
+if (isCComment(line)) {
+printf("Valid C comment.\n");
+} else {
+printf("Invalid input. Please enter a valid C comment.\n");
+}
+
+return 0;
+}
+
+--------------------------------------------------------------------------
+// C program to implement shift-reduce parsing
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+#define MAX 100
+
+// Stack to store the parsed symbols
+char stack[MAX][10];
+int top = -1;
+
+// Push operation for the stack
+void push(char *str) {
+    strcpy(stack[++top], str);
+}
+
+// Pop operation for the stack
+void pop() {
+    if (top >= 0) {
+        top--;
+    }
+}
+
+// Display the current stack content
+void displayStack() {
+    for (int i = 0; i <= top; i++) {
+        printf("%s ", stack[i]);
+    }
+}
+
+// Function to check for reductions
+int reduce() {
+    if (top >= 2) {
+        // Check for E + E or E * E
+        if ((strcmp(stack[top - 2], "E") == 0) &&
+            (strcmp(stack[top - 1], "+") == 0 || strcmp(stack[top - 1], "*") == 0) &&
+            (strcmp(stack[top], "E") == 0)) {
+
+            // Reduce E + E or E * E to E
+            pop();
+            pop();
+            pop();
+            push("E");
+            return 1;
+        }
+    }
+    if (top >= 0) {
+        // Check for id -> E
+        if (strcmp(stack[top], "id") == 0) {
+            // Reduce id to E
+            pop();
+            push("E");
+            return 1;
+        }
+    }
+    return 0;
+}
+
+// Shift-Reduce Parsing Function
+void shiftReduceParsing(char input[]) {
+    char *token = strtok(input, " ");
+
+    while (token != NULL) {
+        // Shift operation
+        push(token);
+        printf("Shift: ");
+        displayStack();
+        printf("\n");
+
+        // Perform reductions
+        while (reduce()) {
+            printf("Reduce: ");
+            displayStack();
+            printf("\n");
+        }
+
+        // Get the next token
+        token = strtok(NULL, " ");
+    }
+
+    // Final result
+    if (top == 0 && strcmp(stack[top], "E") == 0) {
+        printf("Input string is successfully parsed!\n");
+    } else {
+        printf("Error: Input string cannot be parsed.\n");
+    }
+}
+
+// Main Function
+int main() {
+    char input[MAX];
+    char choice;
+
+    do {
+        printf("Enter the input string (tokens separated by spaces, e.g., id + id * id): ");
+        fgets(input, MAX, stdin);
+        input[strcspn(input, "\n")] = 0; // Remove trailing newline
+
+        printf("\nPerforming Shift-Reduce Parsing:\n");
+        shiftReduceParsing(input);
+
+        printf("\nDo you want to parse another string? (y/n): ");
+        choice = getchar();
+        getchar(); // Consume the newline character left by getchar
+    } while (choice == 'y' || choice == 'Y');
+
+    return 0;
+}
+
+---------------------------------------------------------------------------------------
+// C program to implement FIRST
+
+#include <stdio.h>
+#include <ctype.h>
+void FIRST(char[],char );
+void addToResultSet(char[],char);
+int numOfProductions;
+char productionSet[10][10];
+int main()
+{
+    int i;
+    char choice; 
+    char c;
+    char result[20];
+    printf("How many number of productions ? :");
+    scanf(" %d",&numOfProductions);
+    for(i=0;i<numOfProductions;i++)//read production string eg: E=E+T
+    {
+        printf("Enter productions Number %d : ",i+1);
+        scanf(" %s",productionSet[i]);
+    }
+    do
+    {
+        printf("\n Find the FIRST of  :");
+        scanf(" %c",&c);
+        FIRST(result,c); //Compute FIRST; Get Answer in 'result' array
+        printf("\n FIRST(%c)= { ",c);
+        for(i=0;result[i]!='\0';i++)
+        printf(" %c ",result[i]);       //Display result
+        printf("}\n");
+         printf("press 'y' to continue : ");
+        scanf(" %c",&choice);
+    }
+    while(choice=='y'||choice =='Y');
+}
+/*
+ *Function FIRST:
+ *Compute the elements in FIRST(c) and write them
+ *in Result Array.
+ */
+void FIRST(char* Result,char c)
+{
+    int i,j,k;
+    char subResult[20];
+    int foundEpsilon;
+    subResult[0]='\0';
+    Result[0]='\0';
+    //If X is terminal, FIRST(X) = {X}.
+    if(!(isupper(c)))
+    {
+        addToResultSet(Result,c);
+               return ;
+    }
+    //If X is non terminal
+    //Read each production
+    for(i=0;i<numOfProductions;i++)
+    {
+//Find production with X as LHS
+        if(productionSet[i][0]==c)
+        {
+//If X → ε is a production, then add ε to FIRST(X).
+ if(productionSet[i][2]=='$') addToResultSet(Result,'$');
+            //If X is a non-terminal, and X → Y1 Y2 … Yk
+            //is a production, then add a to FIRST(X)
+            //if for some i, a is in FIRST(Yi),
+            //and ε is in all of FIRST(Y1), …, FIRST(Yi-1).
+      else
+            {
+                j=2;
+                while(productionSet[i][j]!='\0')
+                {
+                foundEpsilon=0;
+                FIRST(subResult,productionSet[i][j]);
+                for(k=0;subResult[k]!='\0';k++)
+                    addToResultSet(Result,subResult[k]);
+                 for(k=0;subResult[k]!='\0';k++)
+                     if(subResult[k]=='$')
+                     {
+                         foundEpsilon=1;
+                         break;
+                     }
+                 //No ε found, no need to check next element
+                 if(!foundEpsilon)
+                     break;
+                 j++;
+                }
+            }
+    }
+}
+    return ;
+}
+/* addToResultSet adds the computed
+ *element to result set. 
+ *This code avoids multiple inclusion of elements
+  */
+void addToResultSet(char Result[],char val)
+{
+    int k;
+    for(k=0 ;Result[k]!='\0';k++)
+        if(Result[k]==val)
+            return;
+    Result[k]=val;
+    Result[k+1]='\0';
+}
+
+--------------------------------------------------------------
+// C program to implement FOLLOW
+
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+int n, j;
+char a[10][10], Result[10];
+char subResult[20];
+
+void follow(char *Result, char c);
+void first(char *Result, char c);
+void addToResultSet(char[], char);
+
+int main()
+{
+    int i;
+    char c, choice;
+    printf("Enter the number of productions: ");
+    scanf("%d", &n);
+    printf("Enter %d productions.\nProduction with multiple terms should be given as separate productions\n", n);
+    for (i = 0; i < n; i++)
+        scanf("%s", a[i]);
+
+    do
+    {
+        printf("Find FOLLOW of: ");
+        scanf(" %c", &c);
+        follow(Result, c);
+        printf("FOLLOW(%c) = { ", c);
+        for (i = 0; Result[i] != '\0'; i++)
+            printf("%c ", Result[i]);
+        printf(" }\n");
+        printf("Do you want to continue (y/n)?: ");
+        scanf(" %c", &choice);
+        memset(Result, 0, sizeof(Result));
+        memset(subResult, 0, sizeof(subResult));
+    } while (choice == 'y' || choice == 'Y');
+
+    return 0;
+}
+
+void follow(char *Result, char c)
+{
+    int k;
+    subResult[0] = '\0';
+    Result[0] = '\0';
+    if (a[0][0] == c)
+        addToResultSet(Result, '$');
+    for (int i = 0; i < n; i++)
+    {
+        for (j = 2; j < strlen(a[i]); j++)
+        {
+            if (a[i][j] == c)
+            {
+                if (a[i][j + 1] != '\0')
+                    first(subResult, a[i][j + 1]);
+                if (a[i][j + 1] == '\0' && c != a[i][0])
+                    follow(subResult, a[i][0]);
+                for (k = 0; subResult[k] != '\0'; k++)
+                    addToResultSet(Result, subResult[k]);
+            }
+        }
+    }
+}
+
+void first(char *R, char c)
+{
+    int k, m;
+    if (!(isupper(c)) && c != '#')
+        addToResultSet(R, c);
+    for (k = 0; k < n; k++)
+    {
+        if (a[k][0] == c)
+        {
+            if (a[k][2] == '#' && c != a[k][0])
+                follow(R, a[k][0]);
+            else if (!(isupper(a[k][2])) && a[k][2] != '#')
+                addToResultSet(R, a[k][2]);
+            else
+                first(R, a[k][2]);
+            for (m = 0; R[m] != '\0'; m++)
+                addToResultSet(Result, R[m]);
+        }
+    }
+}
+
+void addToResultSet(char Result[], char val)
+{
+    int k;
+    for (k = 0; Result[k] != '\0'; k++)
+    {
+        if (Result[k] == val)
+            return;
+    }
+    Result[k] = val;
+    Result[k + 1] = '\0';
+}
+
+------------------------------------------------------------------
+// C program to implement Intermediate code Generation
+
+#include<stdio.h>
+#include<string.h>
+#include<stdlib.h>
+
+int i = 1, j = 0, tmpch = 90;
+char str[100], left[15], right[15];
+void findopr();
+void explore();
+void fleft(int);
+void fright(int);
+struct exp {
+        int pos;
+        char op;
+}k[15];
+
+void main() {
+        printf("Input :");
+        scanf("%s", str);
+        printf("The intermediate code:\n");
+        findopr();
+        explore();
+}
+void findopr() {
+        for (i = 0; str[i] != '\0'; i++)
+                if (str[i] == '/') {
+                        k[j].pos = i;
+                        k[j++].op = '/';
+                }
+        for (i = 0; str[i] != '\0'; i++)
+                if (str[i] == '*') {
+                        k[j].pos = i;
+                        k[j++].op = '*';
+                }
+        for (i = 0; str[i] != '\0'; i++)
+                if (str[i] == '+') {
+                        k[j].pos = i;
+                        k[j++].op = '+';
+                }
+        for (i = 0; str[i] != '\0'; i++)
+                if (str[i] == '-') {
+                        k[j].pos = i;
+                        k[j++].op = '-';
+                }
+}
+
+void explore() {
+        i = 0;
+        while (i < j) {
+                fleft(k[i].pos);
+                fright(k[i].pos);
+                str[k[i].pos] = tmpch--;
+                printf("\t%c = %s%c%s\t\t", str[k[i].pos], left, k[i].op, right);
+                printf("\n");
+                i++;
+        }
+        fleft(1);
+        fright(1);
+        printf("\t%s = %s\n", left, right);
+}
+
+void fleft(int x) {
+        x--;
+        strcpy(left, "");
+        while (str[x] != '+' && str[x] != '-' && str[x] != '*' && str[x] != '/' && str[x] != '=' && str[x] != '\0') {
+                if (str[x] != '$') {
+                        strncat(left, & str[x], 1);
+                        str[x] = '$';
+                }
+                x--;
+        }
+}
+
+void fright(int x) {
+        x++;
+        strcpy(right, "");
+        while (str[x] != '+' && str[x] != '-' && str[x] != '*' && str[x] != '/' && str[x] != '\0' && str[x] != '=') {
+                if (str[x] != '$') {
+                        strncat(right, & str[x], 1);
+                        str[x] = '$';
+                }
+                x++;
+        }
+}
+
